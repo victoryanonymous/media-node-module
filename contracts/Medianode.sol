@@ -2,7 +2,7 @@
 pragma solidity ^0.8.28;
 
 contract Medianode {
-    uint256 public constant MIN_DEPOSIT = 10;
+    uint256 public constant MIN_DEPOSIT = 10 ether;
     address public immutable i_owner;
 
     constructor() {
@@ -10,9 +10,11 @@ contract Medianode {
     }
 
     struct Deposit {
-        address depositer;
+        address depositor;
         uint256 amount;
+        uint256 depositedAt;
     }
+
     struct HardwareSpecs {
         uint64 cpu;
         uint64 ram_in_gb;
@@ -27,11 +29,23 @@ contract Medianode {
         string url;
         Deposit[] deposits;
         bool leased;
+        uint256 totalDeposit;
         HardwareSpecs hardware_specs;
         address contract_address;
         bool is_active;
     }
-    mapping(address => Node) public nodes;
+
+    // Events
+    event MediaNodeRegistered(string indexed nodeId, address indexed owner);
+    event MediaNodeDeposit(
+        string indexed nodeId,
+        address indexed depositor,
+        uint256 amount
+    );
+    event MediaNodeActivated(string indexed nodeId);
+
+    mapping(string => Node) public nodes;
+    mapping(address => string[]) public userNodeIds;
 
     // Errors
     error NotEnoughDeposit(
@@ -44,10 +58,7 @@ contract Medianode {
 
     // validation Errors
     modifier validateId(string memory id) {
-        require(
-            bytes(id).length >= 10,
-            "ID must be at least 10 characters long"
-        );
+        require(bytes(id).length >= 10, "ID must be at least 10 chars");
         require(
             keccak256(abi.encodePacked(substr(id, 0, 9))) ==
                 keccak256(abi.encodePacked("medianode")),
@@ -58,7 +69,12 @@ contract Medianode {
 
     // Modifiers
     modifier onlyOwner() {
-        require(msg.sender == i_owner, "Not the owner");
+        require(msg.sender == i_owner, "Not the contract owner");
+        _;
+    }
+
+    modifier nodeExists(string memory id) {
+        require(nodes[id].owner != address(0), "Media node does not exist");
         _;
     }
 
@@ -69,6 +85,7 @@ contract Medianode {
         uint length
     ) internal pure returns (string memory) {
         bytes memory strBytes = bytes(str);
+        require(start + length <= strBytes.length, "Invalid substring range");
         bytes memory result = new bytes(length);
         for (uint i = 0; i < length; i++) {
             result[i] = strBytes[i + start];
@@ -83,42 +100,66 @@ contract Medianode {
         string memory description,
         string memory url,
         HardwareSpecs memory hardware_specs,
-        address contract_address,
-        uint256 deposit
-    ) public payable onlyOwner validateId(id) returns (Node memory) {
-        if (msg.value < deposit) {
-            revert NotEnoughBalance("Not enough balance!");
-        }
-        if (deposit < MIN_DEPOSIT) {
-            revert NotEnoughDeposit(
-                "Not enough deposit! ",
-                deposit,
-                "required",
-                MIN_DEPOSIT
-            );
-        }
-        Deposit[] memory deposits = new Deposit[](1);
-        deposits[0] = Deposit({depositer: msg.sender, amount: deposit});
-        Node memory node = Node({
-            id: id,
-            owner: msg.sender,
-            price_per_hour: price_per_hour,
-            name: name,
-            description: description,
-            url: url,
-            deposits: deposits,
-            leased: false,
-            hardware_specs: hardware_specs,
-            contract_address: contract_address,
-            is_active: false
-        });
-        nodes[msg.sender] = node;
+        address contract_address
+    ) external validateId(id) returns (Node memory) {
+        require(nodes[id].owner == address(0), "Node already exists");
+
+        Node storage node = nodes[id];
+        node.id = id;
+        node.owner = msg.sender;
+        node.price_per_hour = price_per_hour;
+        node.name = name;
+        node.description = description;
+        node.url = url;
+        node.contract_address = contract_address;
+        node.hardware_specs = hardware_specs;
+        node.is_active = false;
+        node.leased = false;
+        node.totalDeposit = 0;
+
+        userNodeIds[msg.sender].push(id);
+
+        emit MediaNodeRegistered(id, msg.sender);
         return node;
     }
 
-    function getNodes() public view returns (Node[] memory) {
-        Node[] memory nodesArray = new Node[](1);
-        nodesArray[0] = nodes[msg.sender];
-        return nodesArray;
+    function depositMediaNode(
+        string memory id
+    ) external payable nodeExists(id) {
+        require(msg.value > 0, "Deposit amount must be > 0");
+
+        Node storage node = nodes[id];
+
+        // Append deposit
+        node.deposits.push(
+            Deposit({
+                depositor: msg.sender,
+                amount: msg.value,
+                depositedAt: block.timestamp
+            })
+        );
+
+        node.totalDeposit += msg.value;
+
+        // Activate if minimum met
+        if (!node.is_active && node.totalDeposit >= MIN_DEPOSIT) {
+            node.is_active = true;
+            emit MediaNodeActivated(id);
+        }
+
+        emit MediaNodeDeposit(id, msg.sender, msg.value);
+    }
+
+    function getMyNodes() external view returns (Node[] memory) {
+        string[] memory ids = userNodeIds[msg.sender];
+        Node[] memory result = new Node[](ids.length);
+        for (uint i = 0; i < ids.length; i++) {
+            result[i] = nodes[ids[i]];
+        }
+        return result;
+    }
+
+    function getNodeById(string memory id) external view returns (Node memory) {
+        return nodes[id];
     }
 }
