@@ -6,7 +6,6 @@ describe("MediaNodeRegister", function () {
     let mediaNodeImplementation;
     let owner;
     let otherAccount;
-    let mediaNodeUrlsMap;
 
     const instantiateParams = {
         creation_fee: 100,
@@ -43,6 +42,7 @@ describe("MediaNodeRegister", function () {
 
     describe("registerMediaNode", function () {
         beforeEach(async function () {
+            // Instantiate the factory first
             await mediaNodeFactory.Instantiate(
                 instantiateParams.creation_fee,
                 instantiateParams.min_lease_hours,
@@ -98,20 +98,16 @@ describe("MediaNodeRegister", function () {
                 .withArgs(registrationInput.id);
         });
 
-        // it("should revert if the URL already exists", async function () {
-        //      const depositAmount = 100;
+        it("should revert if the URL already exists", async function () {
+            const depositAmount = 100;
 
-        //      // Register the node the first time
-        //      mediaNodeUrlsMap[registrationInput.url] = 0;
-        //      await mediaNodeFactory.registerMediaNode(registrationInput, { value: depositAmount });
-        //      mediaNodeUrlsMap[registrationInput.url] = 1;
+            await mediaNodeFactory.registerMediaNode(registrationInput, { value: depositAmount });
 
-        //      // Attempt to register a new node with the same URL
-        //      const secondRegistrationInput = { ...registrationInput, id: "medianode1234567891" };
-        //     //  await expect(mediaNodeFactory.registerMediaNode(secondRegistrationInput, { value: depositAmount }))
-        //     //      .to.be.revertedWithCustomError(mediaNodeFactory, "UrlAlreadyExists")
-        //     //      .withArgs(registrationInput.url);
-        // });
+            const secondRegistrationInput = { ...registrationInput, id: "medianode1234567891" };
+            await expect(mediaNodeFactory.registerMediaNode(secondRegistrationInput, { value: depositAmount }))
+                .to.be.revertedWithCustomError(mediaNodeFactory, "UrlAlreadyExists")
+                .withArgs(registrationInput.url);
+        });
 
         // Test cases for invalid registration input
         it("should revert if id is empty", async function () {
@@ -168,6 +164,36 @@ describe("MediaNodeRegister", function () {
             await expect(mediaNodeFactory.registerMediaNode(invalidInput, { value: ethers.parseEther("100") }))
                 .to.be.revertedWithCustomError(mediaNodeFactory, "InvalidStorage")
                 .withArgs(0);
+        });
+    });
+
+    describe("getNodeDetails", function () {
+        beforeEach(async function () {
+            await mediaNodeFactory.Instantiate(
+                instantiateParams.creation_fee,
+                instantiateParams.min_lease_hours,
+                instantiateParams.max_lease_hours,
+                instantiateParams.initial_deposit_percentage,
+                instantiateParams.min_deposit
+            );
+        });
+
+        it("should return the details of a media node by id if it exists", async function () {
+            const depositAmount = 100;
+
+            await mediaNodeFactory.registerMediaNode(registrationInput, { value: depositAmount });
+            expect(await mediaNodeFactory.mediaNodeCount()).to.equal(1);
+
+            const nodeDetails = await mediaNodeFactory.getNodeDetails(registrationInput.id);
+            expect(nodeDetails.owner).to.equal(owner.address);
+            expect(nodeDetails.status).to.equal(1);
+            expect(nodeDetails.deposits[0].amount).to.equal(depositAmount);
+        });
+
+        it("should revert if the media node ID does not exist", async function () {
+            await expect(mediaNodeFactory.getNodeDetails("nonexistent_id"))
+                .to.be.revertedWithCustomError(mediaNodeFactory, "NodeNotFound")
+                .withArgs("nonexistent_id");
         });
     });
 });

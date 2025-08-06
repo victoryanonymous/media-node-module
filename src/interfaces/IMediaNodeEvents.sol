@@ -2,7 +2,6 @@
 pragma solidity ^0.8.24;
 
 import {MediaNodeTypes} from "../types/MediaNodeTypes.sol";
-import {Decimal} from "../lib/math/DecimalMath.sol";
 
 interface IMediaNodeEvents {
     event MediaNodeUpdated(

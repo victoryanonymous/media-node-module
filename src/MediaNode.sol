@@ -3,7 +3,6 @@ pragma solidity ^0.8.24;
 import {IMediaNode} from "./interfaces/IMediaNode.sol";
 import {IMediaNodeErrors} from "./interfaces/IMediaNodeErrors.sol";
 import {MediaNodeTypes} from "./types/MediaNodeTypes.sol";
-import {DecimalMath, Decimal} from "./lib/math/DecimalMath.sol";
 import {MediaNodeFactory} from "./MediaNodeFactory.sol";
 import {MediaNodeFactoryTypes} from "./types/MediaNodeFactoryTypes.sol";
 import {IMediaNodeEvents} from "./interfaces/IMediaNodeEvents.sol";
@@ -22,15 +21,15 @@ contract MediaNode is IMediaNode, IMediaNodeErrors, IMediaNodeEvents {
         _;
     }
 
-    modifier isFactoryInitialized() {
-        require(
-            msg.sender == MediaNodeFactoryAddress,
-            IMediaNodeErrors.InvalidMediaNodeFactoryAddress(
-                MediaNodeFactoryAddress
-            )
-        );
-        _;
-    }
+    // modifier isFactoryInitialized() {
+    //     require(
+    //         msg.sender == MediaNodeFactoryAddress,
+    //         IMediaNodeErrors.InvalidMediaNodeFactoryAddress(
+    //             MediaNodeFactoryAddress
+    //         )
+    //     );
+    //     _;
+    // }
 
     constructor() {
         // Empty constructor for cloning
@@ -87,6 +86,9 @@ contract MediaNode is IMediaNode, IMediaNodeErrors, IMediaNodeEvents {
         }
         if (bytes(input.description).length != 0) {
             node.description = input.description;
+        }
+        if (bytes(input.url).length != 0) {
+            node.url = input.url;
         }
         if (input.cpu != 0) {
             node.hardware_specs.cpu = input.cpu;

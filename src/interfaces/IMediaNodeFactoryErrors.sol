@@ -1,8 +1,6 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.24;
 
-import {Decimal} from "../lib/math/DecimalMath.sol";
-
 interface IMediaNodeFactoryErrors {
     error UnauthorizedAccess();
     error AlreadyInstantiated();

@@ -7,7 +7,6 @@ import {MediaNodeFactoryTypes} from "./types/MediaNodeFactoryTypes.sol";
 import {IMediaNodeEvents} from "./interfaces/IMediaNodeEvents.sol";
 import {MediaNodeTypes} from "./types/MediaNodeTypes.sol";
 import {IMediaNode} from "./interfaces/IMediaNode.sol";
-import {DecimalMath, Decimal} from "./lib/math/DecimalMath.sol";
 import {Clones} from "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract MediaNodeFactory is
@@ -223,8 +222,12 @@ contract MediaNodeFactory is
     }
 
     function _updateMappings(string calldata url, address owner) private {
+        require(
+            mediaNodeUrlsMap[url] == 0,
+            IMediaNodeFactoryErrors.UrlAlreadyExists(url)
+        );
         mediaNodeOwnersMap[mediaNodeCount] = owner;
-        mediaNodeUrlsMap[url] = mediaNodeCount;
+        mediaNodeUrlsMap[url] = 1;
         mediaNodeCount++;
     }
 

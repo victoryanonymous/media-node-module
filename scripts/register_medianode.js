@@ -29,8 +29,9 @@ async function main() {
     }
 
     // Prepare media node registration payload
+    const mediaNodeId = "medianode1234567890";
     const registerTx = await mediaNodeFactory.registerMediaNode({
-      id: "medianode1234567890",
+      id: mediaNodeId,
       price_per_hour: 100,
       name: "MediaNode Testing",
       description: "MediaNode Description",
@@ -43,9 +44,12 @@ async function main() {
     }, { value: 10 } );
 
     console.log("Waiting for transaction confirmation...");
-    await registerTx.wait(1);
+    const receipt = await registerTx.wait(1);
+    console.log('registerTx', receipt);
     console.log("✅ Medianode registered successfully!");
-    const node = await mediaNodeFactory.getNodeDetails("medianode1234567890");
+    const node = await mediaNodeFactory.getNodeDetails(mediaNodeId);
+    const nodeAddress = await mediaNodeFactory.mediaNodeContractAddressesMap(mediaNodeId);
+    console.log("Node address:", nodeAddress);
     console.log("Node details:", node);
   } catch (error) {
     console.error("❌ Error registering MediaNode:", error.message);
