@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: SEE LICENSE IN LICENSE
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.24;
 
 import {IMediaNodeFactoryEvents} from "./interfaces/IMediaNodeFactoryEvents.sol";
 import {IMediaNodeFactoryErrors} from "./interfaces/IMediaNodeFactoryErrors.sol";
@@ -15,7 +15,7 @@ contract MediaNodeFactory is
     IMediaNodeEvents
 {
     address public immutable contractOwner;
-    address public mediaNodeImplementation;
+    address public immutable mediaNodeImplementation;
     bool private _instantiated;
 
     MediaNodeFactoryTypes.Params public params;
@@ -41,6 +41,11 @@ contract MediaNodeFactory is
     }
 
     constructor(address _contractOwner, address _mediaNodeImplementation) {
+        require(_contractOwner != address(0), "Owner cannot be zero address");
+        require(
+            _mediaNodeImplementation != address(0),
+            "Implementation cannot be zero address"
+        );
         contractOwner = _contractOwner;
         mediaNodeImplementation = _mediaNodeImplementation;
         _instantiated = false;
@@ -111,13 +116,12 @@ contract MediaNodeFactory is
             status
         );
 
+        nodes[id] = nodeDetails;
         address nodeAddress = _deployAndInitializeNode(nodeDetails);
         mediaNodeContractAddressesMap[id] = nodeAddress;
         _updateMappings(input.url, msg.sender);
 
         _transferFunds(nodeAddress);
-        nodes[id] = nodeDetails;
-
         _emitEvents(id, input, status, nodeDetails.deposits);
     }
 

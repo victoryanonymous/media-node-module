@@ -6,7 +6,7 @@ import {MediaNodeTypes} from "../types/MediaNodeTypes.sol";
 interface IMediaNode {
     function initialize(
         MediaNodeTypes.MediaNode memory nodeDetails,
-        address _MediaNodeFactoryAddress
+        address _mediaNodeFactoryAddress
     ) external;
 
     function updateMediaNode(

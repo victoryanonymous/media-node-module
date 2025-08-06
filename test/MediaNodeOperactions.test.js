@@ -98,7 +98,7 @@ describe("MediaNode", function () {
             const contractNodeDetails = await mediaNodeInstance.getMediaNodeDetails();
             expect(contractNodeDetails.owner).to.equal(nodeDetails.owner);
             expect(contractNodeDetails.id).to.equal(nodeDetails.id);
-            expect(await mediaNodeInstance.MediaNodeFactoryAddress()).to.equal(mediaNodeFactory.target);
+            expect(await mediaNodeInstance.mediaNodeFactoryAddress()).to.equal(mediaNodeFactory.target);
         });
 
         it("should revert if already initialized", async function () {
@@ -130,7 +130,7 @@ describe("MediaNode", function () {
             const contractNodeDetails = await mediaNodeInstance.getMediaNodeDetails();
             expect(contractNodeDetails.owner).to.equal(nodeDetails.owner);
             expect(contractNodeDetails.id).to.equal(nodeDetails.id);
-            expect(await mediaNodeInstance.MediaNodeFactoryAddress()).to.equal(mediaNodeFactory.target);
+            expect(await mediaNodeInstance.mediaNodeFactoryAddress()).to.equal(mediaNodeFactory.target);
         });
     });
 

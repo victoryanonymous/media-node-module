@@ -11,7 +11,7 @@ contract MediaNode is IMediaNode, IMediaNodeErrors, IMediaNodeEvents {
     MediaNodeTypes.MediaNode public node;
     MediaNodeFactoryTypes.Params public mediaNodeFactoryParams;
 
-    address public MediaNodeFactoryAddress;
+    address public mediaNodeFactoryAddress;
 
     modifier onlyOwner() {
         require(
@@ -23,9 +23,9 @@ contract MediaNode is IMediaNode, IMediaNodeErrors, IMediaNodeEvents {
 
     // modifier isFactoryInitialized() {
     //     require(
-    //         msg.sender == MediaNodeFactoryAddress,
+    //         msg.sender == mediaNodeFactoryAddress,
     //         IMediaNodeErrors.InvalidMediaNodeFactoryAddress(
-    //             MediaNodeFactoryAddress
+    //             mediaNodeFactoryAddress
     //         )
     //     );
     //     _;
@@ -45,12 +45,12 @@ contract MediaNode is IMediaNode, IMediaNodeErrors, IMediaNodeEvents {
 
     function initialize(
         MediaNodeTypes.MediaNode memory nodeDetails,
-        address _MediaNodeFactoryAddress
+        address _mediaNodeFactoryAddress
     ) external {
         // Only allow initialization once
-        require(MediaNodeFactoryAddress == address(0), "Already initialized");
+        require(mediaNodeFactoryAddress == address(0), "Already initialized");
         require(
-            _MediaNodeFactoryAddress != address(0),
+            _mediaNodeFactoryAddress != address(0),
             "Invalid factory address"
         );
         require(
@@ -58,9 +58,9 @@ contract MediaNode is IMediaNode, IMediaNodeErrors, IMediaNodeEvents {
             "No deposits provided during initialization"
         );
 
-        MediaNodeFactoryAddress = _MediaNodeFactoryAddress;
+        mediaNodeFactoryAddress = _mediaNodeFactoryAddress;
         node = nodeDetails;
-        mediaNodeFactoryParams = MediaNodeFactory(MediaNodeFactoryAddress)
+        mediaNodeFactoryParams = MediaNodeFactory(mediaNodeFactoryAddress)
             .getParams();
 
         emit MediaNodeSpecs(
